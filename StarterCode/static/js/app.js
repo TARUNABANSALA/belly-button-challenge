@@ -37,12 +37,21 @@ function demographic(selectedMetadataIndex) {
   });
 }
 // Update all the plots when a new sample is selected:
+// function optionChanged(selectedId) {
+//   d3.json(url).then(data => {
+//     const metadata = data.metadata;
+//     selectedMetadataIndex = findValue(metadata, parseInt(selectedId));
+//     demographic(selectedMetadataIndex)});
+// };
 function optionChanged(selectedId) {
-  d3.json(url).then(data => {
-    const metadata = data.metadata;
-    selectedMetadataIndex = findValue(metadata, parseInt(selectedId));
-    demographic(selectedMetadataIndex)});
-};
+  // Update the demographic information
+  demographic(parseInt(selectedId));
+  // Update the bar chart
+  updateBarChart(selectedId);
+  // Update the bubble chart
+  updateBubbleChart(selectedId);
+}
+
 
 function findValue(metadata, target) {
   for (let i = 0; i < metadata.length; i++) {
@@ -87,6 +96,42 @@ function top10data() {
   })
 };
 
+function updateBarChart(selectedSample) {
+  d3.json(url).then(data => {
+    const samples = data.samples;
+    // Find the selected sample
+    const selectedSampleData = samples.find(sample => sample.id === selectedSample);
+    // Get the top 10 OTUs for the selected sample
+    const top10OTUs = selectedSampleData.sample_values.slice(0, 10);
+    const top10IDs = selectedSampleData.otu_ids.slice(0, 10);
+    const top10Labels = selectedSampleData.otu_labels.slice(0, 10);
+    // Update the trace object
+    const updatedTrace = {
+      x: top10OTUs,
+      y: top10IDs.map(id => `OTU ${id}`),
+      type: 'bar',
+      orientation: 'h',
+    };
+    // Update the data array
+    const updatedData = [updatedTrace];
+    // Update the layout object (if needed)
+    const updatedLayout = {
+      title: 'Top 10 OTUs',
+      xaxis: {
+        title: 'Sample Values',
+      },
+      yaxis: {
+        title: 'OTU IDs',
+        automargin: true,
+      },
+    };
+    // Update the chart
+    Plotly.newPlot('plot', updatedData, updatedLayout);
+  }).catch(error => {
+    console.log('Error loading data:', error);
+  });
+}
+
 // Use D3 to make the AJAX request
 d3.json(url).then(data => {
   const samples = data.samples;
@@ -122,4 +167,51 @@ d3.json(url).then(data => {
   Plotly.newPlot('plot2', bubbledata, layout);
 }).catch(error => {
   console.log('Error loading data:', error);
+});
+function updateBubbleChart(selectedSample) {
+  d3.json(url).then(data => {
+    const samples = data.samples;
+    // Find the selected sample
+    const selectedSampleData = samples.find(sample => sample.id === selectedSample);
+    const otuIDs = selectedSampleData.otu_ids;
+    const sampleValues = selectedSampleData.sample_values;
+    const otuLabels = selectedSampleData.otu_labels;
+    // Update the trace object
+    const updatedTrace = {
+      x: otuIDs,
+      y: sampleValues,
+      text: otuLabels,
+      mode: 'markers',
+      marker: {
+        size: sampleValues,
+        color: otuIDs,
+        colorscale: 'Viridis',
+      },
+    };
+    // Update the data array
+    const updatedData = [updatedTrace];
+    // Update the layout object (if needed)
+    const updatedLayout = {
+      title: 'Bubble Chart',
+      xaxis: {
+        title: 'OTU IDs',
+      },
+      yaxis: {
+        title: 'Sample Values',
+      },
+      // height: 600,
+      // width: 600,
+      showlegend: false,
+    };
+    // Update the chart
+    Plotly.newPlot('plot2', updatedData, updatedLayout);
+  }).catch(error => {
+    console.log('Error loading data:', error);
+  });
+}
+
+// Add an event listener to the dropdown menu
+document.getElementById("selDataset").addEventListener("change", function() {
+  const selectedSample = this.value;
+  optionChanged(selectedSample);
 });
