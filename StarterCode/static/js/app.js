@@ -1,10 +1,19 @@
 // Define the URL for the JSON file
 const url = 'https://2u-data-curriculum-team.s3.amazonaws.com/dataviz-classroom/v1.1/14-Interactive-Web-Visualizations/02-Homework/samples.json';
 
-loadOptions();
-// Display the sample metadata, i.e., an individual's demographic information.
+// Functions for each questions asked:
+// calling function which connects the "selDataset" element with the names array from data
+loadOptions(0);
+// calling function to retrieve metadata information individually and change on option change. Display on dashboard
 demographic(0);
-top10data();
+// calling function to retrieve bar chart information individually and changes on option change. Display on dashboard
+updateBarChart(0);
+// calling function to retrieve bubble chart information individually and change on option change. Display on dashboard
+updateBubbleChart(0);
+// calling function to retrieve Gauge chart information individually and change on option change. Display on dashboard
+updateGaugeChart(0);
+
+// This function connects the names array from data with the 'id' numbers with the "selDataset" element 
 function loadOptions() {
   d3.json(url).then(data => {
     var options = data.names;
@@ -36,23 +45,9 @@ function demographic(selectedMetadataIndex) {
     });
   });
 }
-// Update all the plots when a new sample is selected:
-// function optionChanged(selectedId) {
-//   d3.json(url).then(data => {
-//     const metadata = data.metadata;
-//     selectedMetadataIndex = findValue(metadata, parseInt(selectedId));
-//     demographic(selectedMetadataIndex)});
-// };
-function optionChanged(selectedId) {
-  // Update the demographic information
-  demographic(parseInt(selectedId));
-  // Update the bar chart
-  updateBarChart(selectedId);
-  // Update the bubble chart
-  updateBubbleChart(selectedId);
-}
 
-
+// Extraction the index values with respect to the target values and calling the respective functions in optionChanged function
+// Created function for metadata
 function findValue(metadata, target) {
   for (let i = 0; i < metadata.length; i++) {
     if (metadata[i].id === target) {
@@ -61,49 +56,34 @@ function findValue(metadata, target) {
   }
   return -1; // Match not found
 }
-function top10data() {
-  // Use D3 to make the AJAX request
-  d3.json(url).then(data => {
-    const samples = data.samples;
-    // Get the top 10 OTUs
-    const top10OTUs = samples[0].sample_values.slice(0, 10);
-    const top10IDs = samples[0].otu_ids.slice(0, 10);
-    const top10Labels = samples[0].otu_labels.slice(0, 10);
-    // Create the trace object
-    const trace = {
-      x: top10OTUs,
-      y: top10IDs.map(id => `OTU ${id}`),
-      type: 'bar',
-      orientation: 'h',
-    };
-    // Create the data array
-    const top10data = [trace];
-    // Create the layout object
-    const layout = {
-      title: 'Top 10 OTUs',
-      xaxis: {
-        title: 'Sample Values',
-      },
-      yaxis: {
-        title: 'OTU IDs',
-        automargin: true,
-      },
-    };
-    // Plot the chart
-    Plotly.newPlot('plot', top10data, layout);
-  }).catch(error => {
-    console.log('Error loading data:', error);
-  })
-};
+// Created function for bar graph in regards to sample values
+function findsample_barValues(samples, target){
+  for (let i = 0; i < samples.length; i++) {
+    if (parseInt(samples[i].id) === target) {
+      return i; // Match found
+    }
+  }
+  return -1; // Match not found
+}
+// Created function for bubble graph in regards to sample values
+function findsample_bubbleValues(samples, target){
+  for (let i = 0; i < samples.length; i++) {
+    if (parseInt(samples[i].id) === target) {
+      return i; // Match found
+    }
+  }
+  return -1; // Match not found
+}
 
-function updateBarChart(selectedSample) {
+// To update bar plot when a new sample is selected.
+function updateBarChart(selectedsampledataIndex) {
   d3.json(url).then(data => {
     const samples = data.samples;
     // Find the selected sample
-    const selectedSampleData = samples.find(sample => sample.id === selectedSample);
+    const selectedSampleData = samples[selectedsampledataIndex];
     // Get the top 10 OTUs for the selected sample
-    const top10OTUs = selectedSampleData.sample_values.slice(0, 10);
-    const top10IDs = selectedSampleData.otu_ids.slice(0, 10);
+    const top10OTUs = selectedSampleData.sample_values.slice(0, 10).reverse();
+    const top10IDs = selectedSampleData.otu_ids.slice(0, 10).reverse();
     const top10Labels = selectedSampleData.otu_labels.slice(0, 10);
     // Update the trace object
     const updatedTrace = {
@@ -132,47 +112,12 @@ function updateBarChart(selectedSample) {
   });
 }
 
-// Use D3 to make the AJAX request
-d3.json(url).then(data => {
-  const samples = data.samples;
-  const otuIDs = samples[0].otu_ids;
-  const sampleValues = samples[0].sample_values;
-  const otuLabels = samples[0].otu_labels;
-  // Create the trace object
-  const trace = {
-    x: otuIDs,
-    y: sampleValues,
-    text: otuLabels,
-    mode: 'markers',
-    marker: {
-      size: sampleValues,
-      color: otuIDs,
-      colorscale: 'Viridis',
-    },
-  };
-  // Create the data array
-  const bubbledata = [trace];
-  // Create the layout object
-  const layout = {
-    title: 'Bubble Chart',
-    xaxis: {
-      title: 'OTU IDs',
-    },
-    yaxis: {
-      title: 'Sample Values',
-    },
-    showlegend: false,
-  };
-  // Plot the chart
-  Plotly.newPlot('plot2', bubbledata, layout);
-}).catch(error => {
-  console.log('Error loading data:', error);
-});
-function updateBubbleChart(selectedSample) {
+// To update bubble plot when a new sample is selected.
+function updateBubbleChart(selectedsamplebubbledataIndex) {
   d3.json(url).then(data => {
     const samples = data.samples;
     // Find the selected sample
-    const selectedSampleData = samples.find(sample => sample.id === selectedSample);
+    const selectedSampleData = samples[selectedsamplebubbledataIndex];
     const otuIDs = selectedSampleData.otu_ids;
     const sampleValues = selectedSampleData.sample_values;
     const otuLabels = selectedSampleData.otu_labels;
@@ -199,8 +144,6 @@ function updateBubbleChart(selectedSample) {
       yaxis: {
         title: 'Sample Values',
       },
-      // height: 600,
-      // width: 600,
       showlegend: false,
     };
     // Update the chart
@@ -210,8 +153,63 @@ function updateBubbleChart(selectedSample) {
   });
 }
 
-// Add an event listener to the dropdown menu
-document.getElementById("selDataset").addEventListener("change", function() {
-  const selectedSample = this.value;
-  optionChanged(selectedSample);
-});
+// This function is created to call the Gauge chart
+function updateGaugeChart(selectedMetadataIndex) {
+  d3.json(url).then(data => {
+    const metadata = data.metadata;
+    const selectedWashingFrequency = metadata[selectedMetadataIndex].wfreq;
+    // Update the gauge chart
+    const gaugeData = [
+      {
+        type: "indicator",
+        mode: "gauge+number",
+        value: selectedWashingFrequency,
+        title: {
+          text: "Belly Button Washing Frequency<br><sub>Scrubs per Week</sub>",
+          font: { size: 24 },
+        },
+        gauge: {
+          axis: { range: [null, 9], tickwidth: 1, tickcolor: "darkblue" },
+          bar: { color: "darkblue" },
+          bgcolor: "white",
+          borderwidth: 2,
+          bordercolor: "gray",
+          steps: [
+            { range: [0, 1], color: "#f8f7ff" },
+            { range: [1, 2], color: "#ede9ff" },
+            { range: [2, 3], color: "#e0d6ff" },
+            { range: [3, 4], color: "#d3ceff" },
+            { range: [4, 5], color: "#c6c5ff" },
+            { range: [5, 6], color: "#b9b8ff" },
+            { range: [6, 7], color: "#acacff" },
+            { range: [7, 8], color: "#9f9eff" },
+            { range: [8, 9], color: "#9291ff" },
+          ],
+        },
+      },
+    ];
+
+    const gaugeLayout = { width: 500, height: 400, margin: { t: 0, b: 0 } };
+
+    Plotly.newPlot('gauge', gaugeData, gaugeLayout);
+  }).catch(error => {
+    console.log('Error loading data:', error);
+  });
+}
+
+// To update all the data and plots when a new sample is selected.
+function optionChanged(selectedId) {
+  // Update the demographic information
+  d3.json(url).then(data => {
+    const metadata = data.metadata;
+    selectedMetadataIndex = findValue(metadata, parseInt(selectedId));
+    demographic(selectedMetadataIndex);
+    const samples = data.samples;
+    selectedsampledataIndex = findsample_barValues(samples, parseInt(selectedId));
+    updateBarChart(selectedsampledataIndex);
+    selectedsamplebubbledataIndex = findsample_bubbleValues(samples, parseInt(selectedId));
+    updateBubbleChart(selectedsamplebubbledataIndex);
+    updateGaugeChart(selectedMetadataIndex);
+  }); 
+};
+
